@@ -15,8 +15,16 @@ PFOS_29_map = pd.read_csv("PFOS_29_map.csv")
 @app.route("/")
 def home():
     # Page d'accueil simple avec un message
-    return "<h1>Bienvenue sur l'application PFOS</h1><p>Veuillez sélectionner un site sur la carte pour voir les détails.</p>"
+    return """
+           <h1>Bienvenue sur l'application PFOS</h1>
+           <p>Veuillez sélectionner un site sur la carte pour voir les détails.</p>
+           <p><a href="/carte">Voir la carte de France</a></p>
+       """
 
+@app.route("/carte")
+def show_carte():
+    # Rendre un fichier HTML de la carte de France
+    return render_template("carte_france.html")
 
 @app.route("/details/<name>")
 def show_details(name):
