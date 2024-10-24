@@ -58,32 +58,20 @@ def show_details(name):
                     marker='+', c='g', label='Seuil de détection')
 
     # Ajouter une ligne rouge horizontale pour indiquer le seuil maximal pour la santé
-    plt.axhline(y=4, color='red', linestyle='--', label='Seuil maximal pour la santé')
+    plt.axhline(y=4, color='red', linestyle='--', label='Seuil maximal pour la santé (4ng/L)')
 
     # Ajouter des titres et des labels aux axes
-    plt.title(f"Évolution des PFOS dans le temps ({name}), Échelle Logarithmique", fontsize=12)
+    plt.title(f"Évolution des PFOS dans le temps ({name})", fontsize=12)
     plt.xlabel('Date', fontsize=12)
     plt.ylabel('Valeur par ng/L', fontsize=12)
     plt.legend()
 
-    # Ajuster l'échelle de l'axe Y en échelle logarithmique pour mieux visualiser les variations
-    plt.yscale('log')
 
     # Formater les étiquettes de l'axe Y pour éviter la notation scientifique
     plt.gca().yaxis.set_major_formatter(ScalarFormatter())
     plt.gca().ticklabel_format(style='plain', axis='y', useOffset=False)
 
-    # Définir manuellement les étiquettes principales de l'axe Y pour plus de clarté
-    y_ticks = [0.1, 1, 4, 10, 100, 1000, 10000]
-    y_labels = ['0.1', '1', '4 (Seuil)', '10', '100', '1000', '10000']
-
-    plt.gca().set_yticks(y_ticks)
-    plt.gca().set_yticklabels(y_labels)
-
-    # Réduire la taille de police des étiquettes de l'axe Y pour éviter le chevauchement
-    plt.tick_params(axis='y', labelsize=8)
-
-    # Ajuster les étiquettes de l'axe X pour qu'elles apparaissent tous les 6 mois
+    # Ajuster les étiquettes de l'axe X pour qu'elles apparaissent tous les 3 mois
     plt.gca().xaxis.set_major_locator(mdates.MonthLocator(interval=3))
     plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m'))
 
