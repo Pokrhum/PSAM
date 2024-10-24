@@ -4,7 +4,7 @@ from matplotlib.ticker import ScalarFormatter
 import pandas as pd
 import io
 import base64
-from flask import Flask, render_template_string
+from flask import Flask, render_template_string, render_template
 
 app = Flask(__name__)
 
