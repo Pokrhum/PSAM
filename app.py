@@ -27,17 +27,22 @@ def show_carte():
     return render_template("carte_france.html")
 
 @app.route("/details/<name>")
+@app.route("/details/<name>")
+@app.route("/details/<name>")
+@app.route("/details/<name>")
 def show_details(name):
     # Filtrer les données pour le site spécifique
     filtered_data = PFOS_29_map[PFOS_29_map["name"] == name]
-
-    #if filtered_data.empty:
-     #  return f"<h1>Aucun détail disponible pour {name}</h1>"
 
     # S'assurer que la colonne 'date' est de type datetime
     filtered_data['date'] = pd.to_datetime(filtered_data['date'], errors='coerce')
     filtered_data = filtered_data.dropna(subset=['date'])
 
+    # Supprimer les colonnes inutiles pour simplifier l'affichage
+    columns_to_keep = ['date', 'value', 'less_than', 'name', 'source_text', 'unit', 'pfas_sum']
+    filtered_data = filtered_data[columns_to_keep]
+
+    # Générer le graphique
     plt.figure(figsize=(10, 6))
 
     # Tracer les points pour les valeurs non-nulles de la concentration
@@ -94,11 +99,37 @@ def show_details(name):
     plot_url = base64.b64encode(img.getvalue()).decode()
     plt.close()
 
+    # Convertir le DataFrame filtré en HTML avec les colonnes pertinentes
+    data_table_html = filtered_data.to_html(index=False, border=1)
+
+    # Template HTML simplifié
     html_template = """
-    <h1>Détails pour {{ name }}</h1>
-    <img src="data:image/png;base64,{{ plot_url }}" alt="Graphique des valeurs"/>
+    <!DOCTYPE html>
+    <html lang="fr">
+    <head>
+        <meta charset="UTF-8">
+        <title>Détails pour {{ name }}</title>
+    </head>
+    <body>
+        <div style="width: 80%; margin: auto; padding: 20px;">
+            <h1>Détails pour {{ name }}</h1>
+            <div>
+                <img src="data:image/png;base64,{{ plot_url }}" alt="Graphique des valeurs" style="display: block; margin: auto;"/>
+            </div>
+            <h2 style="margin-top: 30px;">Données Utilisées</h2>
+            <div>
+                {{ data_table|safe }}
+            </div>
+            <div style="margin-top: 20px;">
+                <a href="/carte" style="text-decoration: none; color: blue;">Retour à la carte</a>
+            </div>
+        </div>
+    </body>
+    </html>
     """
-    return render_template_string(html_template, name=name, plot_url=plot_url)
+
+    return render_template_string(html_template, name=name, plot_url=plot_url, data_table=data_table_html)
+
 
 
 if __name__ == "__main__":
