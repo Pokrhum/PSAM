@@ -7,11 +7,13 @@ import io
 import base64
 from utils import generate_filtered_graph
 import urllib.parse
+import gzip
 
 app = Flask(__name__)
 
-# Charger le dataset
-PFAS_map = pd.read_csv("PFAS_map.csv")
+with gzip.open('PFAS_map.csv.gz', 'rt') as f:
+    PFAS_map = pd.read_csv(f)
+
 PFAS_map['date'] = pd.to_datetime(PFAS_map['date'], errors='coerce')
 
 # Template HTML de base avec barre de navigation
