@@ -2,9 +2,6 @@ from flask import Flask, render_template_string, request
 from markupsafe import Markup
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
-import io
-import base64
 from utils import generate_filtered_graph
 import urllib.parse
 import gzip
@@ -130,7 +127,6 @@ def search():
 
 @app.route("/details/<name>")
 def show_details(name):
-
     filtered_data = PFAS_map[PFAS_map["name"] == name]
 
     # Création du nouveau DataFrame en groupant par la colonne 'date'
@@ -146,22 +142,11 @@ def show_details(name):
     # Vérifier ligne par ligne si 'value' n'est pas NaN, alors 'less_than' doit être NaN
     filtered_data.loc[filtered_data['value'].notna(), 'less_than'] = np.nan
 
-
-    # Utiliser la fonction pour générer le graphique
-    generate_filtered_graph(filtered_data, name)
-
-    # Convertir le graphique en image base64
-    img = io.BytesIO()
-    plt.savefig(img, format='png')
-    img.seek(0)
-    plot_url = base64.b64encode(img.getvalue()).decode()
-    plt.close()
-
-    # Création du nouveau DataFrame en groupant par la colonne 'date'
-    new_table = filtered_data
+    # Utiliser la fonction pour générer le graphique interactif
+    plot_html = generate_filtered_graph(filtered_data, name)
 
     # Convertir le nouveau tableau en HTML
-    new_table_html = new_table.to_html(index=False, border=1)
+    new_table_html = filtered_data.to_html(index=False, border=1)
 
     # Créer un tableau des différents PFAS retrouvés dans les analyses avec des liens hypertextes
     pfas_list = PFAS_map[PFAS_map["name"] == name]['substance'].unique()
@@ -171,9 +156,12 @@ def show_details(name):
 
     pfas_table_html = Markup(pfas_table_html)
 
+    # Contenu HTML de la page avec le graphique interactif
     content = f"""
         <h1>Détails pour {name}</h1>
-        <img src="data:image/png;base64,{plot_url}" alt="Graphique des valeurs" style="display: block; margin: auto;"/>
+        <div style="display: block; margin: auto;">
+            {plot_html}
+        </div>
         <h2 style="margin-top: 30px;">Données Utilisées</h2>
         <div style="float: left; width: 65%;">
             {new_table_html}
@@ -194,22 +182,17 @@ def show_substance_details(name, substance):
     # Filtrer les données pour le nom et la substance spécifiés
     filtered_data = PFAS_map[(PFAS_map["name"] == name) & (PFAS_map["substance"] == substance)]
 
-    # Générer un graphique pour la substance spécifique
-    generate_filtered_graph(filtered_data, f"{name} - {substance}")
-
-    # Convertir le graphique en image base64
-    img = io.BytesIO()
-    plt.savefig(img, format='png')
-    img.seek(0)
-    plot_url = base64.b64encode(img.getvalue()).decode()
-    plt.close()
+    # Utiliser la fonction pour générer le graphique interactif
+    plot_html = generate_filtered_graph(filtered_data, f"{name} - {substance}")
 
     # Créer un tableau des données utilisées
     substance_table_html = filtered_data[['date', 'value', 'less_than', 'source_text', 'unit']].to_html(index=False, border=1)
 
     content = f"""
         <h1>Détails pour {substance} à {name}</h1>
-        <img src="data:image/png;base64,{plot_url}" alt="Graphique des valeurs" style="display: block; margin: auto;"/>
+        <div style="display: block; margin: auto;">
+            {plot_html}
+        </div>
         <h2 style="margin-top: 30px;">Données Utilisées</h2>
         <div style="margin-top: 20px;">
             {substance_table_html}

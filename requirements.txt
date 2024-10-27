@@ -11,3 +11,4 @@ gunicorn==23.0.0
 numpy==1.24.4
 MarkupSafe==2.1.1
 urllib3==1.26.14
+plotly==5.15.0
