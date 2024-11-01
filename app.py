@@ -1,6 +1,5 @@
 from flask import Flask, render_template_string, request
 from markupsafe import Markup
-import numpy as np
 import pandas as pd
 from utils import generate_filtered_graph
 import urllib.parse
@@ -8,7 +7,7 @@ import gzip
 
 app = Flask(__name__)
 
-with gzip.open('PFAS_map.csv.gz', 'rt') as f:
+with gzip.open('PFAS_map.csv.gz', 'rt', encoding="utf-8") as f:
     PFAS_map = pd.read_csv(f)
 
 PFAS_map['date'] = pd.to_datetime(PFAS_map['date'], errors='coerce')
@@ -22,32 +21,135 @@ base_html_template = """
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ title }}</title>
     <style>
+        .styled-button {
+            display: inline-block;
+            background-color: #6200ea;
+            color: white;
+            padding: 10px 20px;
+            font-size: 1em;
+            text-align: center;
+            text-decoration: none;
+            border-radius: 5px;
+            transition: background-color 0.3s, transform 0.2s;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        .styled-button:hover {
+            background-color: #3700b3;
+            transform: translateY(-2px);
+            color: #ffffff;
+        }
+        .styled-button:active {
+            transform: translateY(1px);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f7f9;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
         .navbar {
-            overflow: hidden;
-            background-color: #333;
-            padding: 10px;
+            background-color: #6200ea;
+            color: white;
+            padding: 15px;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
         }
         .navbar a {
-            float: left;
             color: white;
-            text-align: center;
-            padding: 10px;
+            padding: 12px 20px;
+            margin: 0 10px;
             text-decoration: none;
+            font-weight: bold;
+            border-radius: 4px;
+            transition: background-color 0.3s;
         }
         .navbar a:hover {
-            background-color: #ddd;
-            color: black;
+            background-color: #3700b3;
+            color: #ffffff;
         }
         .container {
-            width: 80%;
-            margin: auto;
+            width: 90%;
+            max-width: 800px;
             padding: 20px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            margin-top: 30px;
         }
-         .map-container {
-            width: 600px;
-            height: 600px;
-            margin: auto;
-            border: 1px solid #ccc;
+        h1 {
+            color: #333;
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+        p {
+            color: #666;
+            font-size: 1.1em;
+        }
+        button, input[type="text"] {
+            padding: 10px 20px;
+            font-size: 1em;
+            border: none;
+            border-radius: 5px;
+            margin-top: 10px;
+            outline: none;
+            transition: background-color 0.3s, color 0.3s;
+        }
+        button {
+            background-color: #6200ea;
+            color: white;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #3700b3;
+            color: #ffffff;
+        }
+        input[type="text"] {
+            border: 1px solid #ddd;
+            width: calc(100% - 22px);
+            margin-top: 15px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+        .map-container {
+            width: 100%;
+            max-width: 600px;
+            height: 400px;
+            margin: 20px 0;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f4f7f9;
+            color: #333;
+        }
+
+        /* Style général pour tous les liens hypertextes */
+        a {
+            color: #2a5d9f;
+            text-decoration: none;
+            font-weight: bold;
+            transition: color 0.3s ease, text-shadow 0.3s ease;
+        }
+        a:hover {
+            color: #3a7bd5;  /* Une couleur plus claire pour une meilleure lisibilité */
+            text-shadow: 1px 1px 5px rgba(0, 0, 0, 0.2);
         }
     </style>
 </head>
@@ -65,14 +167,23 @@ base_html_template = """
 """
 
 
+
 @app.route("/")
 def home():
     content = """
         <h1>Bienvenue sur l'application PFAS</h1>
-        <p>Veuillez sélectionner un site sur la carte pour voir les détails.</p>
-        <p><a href="/carte">Voir la carte de France</a></p>
+        <p>Ce projet vise à surveiller et analyser la présence de substances perfluoroalkylées (PFAS) dans les eaux françaises.
+        Les PFAS, connus sous le nom de "polluants éternels", sont des substances chimiques persistantes dans l'environnement
+        et représentent un enjeu de santé publique en raison de leur toxicité potentielle.</p>
+        <p>Grâce à cette application, vous pouvez explorer les niveaux de concentration de PFAS dans différents sites en France,
+        afficher des graphiques d'évolution dans le temps et consulter des informations spécifiques pour chaque substance.</p>
+        <p>
+            <a href="/carte" class="styled-button">Voir la carte de France</a>
+        </p>
     """
     return render_template_string(base_html_template, title="Accueil", content=content)
+
+
 
 
 @app.route("/carte")
@@ -101,17 +212,26 @@ def show_carte():
     return render_template_string(base_html_template, title="Carte de France", content=content)
 
 
+from flask import request, render_template_string
+
+
 @app.route("/recherche", methods=["GET", "POST"])
 def search():
     search_results = ""
     if request.method == "POST":
         query = request.form.get("query")
-        filtered_data = PFAS_map[PFAS_map["name"].str.contains(query, case=False, na=False)]
 
-        if not filtered_data.empty:
-            search_results = filtered_data[['date', 'value', 'less_than', 'name', 'source_text', 'unit', 'substance']].to_html(index=False, border=1)
+        # Filtrer les données pour obtenir uniquement les noms uniques correspondant à la requête
+        filtered_data = PFAS_map[PFAS_map["name"].str.contains(query, case=False, na=False)]['name'].unique()
+
+        # Générer des liens hypertextes pour chaque site trouvé avec encodage des noms
+        if filtered_data.size > 0:
+            search_results = "<ul>" + "".join(
+                [f"<li><a href='/details/{urllib.parse.quote(name)}'>{name}</a></li>" for name in filtered_data]
+            ) + "</ul>"
         else:
             search_results = f"<p>Aucun site trouvé pour la recherche : '{query}'</p>"
+
     content = f"""
         <h1>Recherche de Sites</h1>
         <form method="post">
@@ -129,27 +249,16 @@ def search():
 def show_details(name):
     filtered_data = PFAS_map[PFAS_map["name"] == name]
 
-    # Création du nouveau DataFrame en groupant par la colonne 'date'
-    filtered_data = filtered_data.groupby('date').agg(
-        value=('value', 'sum'),
-        unit=('unit', 'first'),
-        less_than=('less_than', 'max'),
-        source_text=('source_text', 'first')
-    ).reset_index()
-
-    # Si la somme de 'value' est égale à 0, la remplacer par NaN
-    filtered_data['value'] = filtered_data['value'].apply(lambda x: np.nan if x == 0 else x)
-    # Vérifier ligne par ligne si 'value' n'est pas NaN, alors 'less_than' doit être NaN
-    filtered_data.loc[filtered_data['value'].notna(), 'less_than'] = np.nan
 
     # Utiliser la fonction pour générer le graphique interactif
-    plot_html = generate_filtered_graph(filtered_data, name)
+    plot_html, filtered_data = generate_filtered_graph(filtered_data, name)
 
     # Convertir le nouveau tableau en HTML
-    new_table_html = filtered_data.to_html(index=False, border=1)
+    mean_table_html = filtered_data.to_html(index=False, border=1)
 
     # Créer un tableau des différents PFAS retrouvés dans les analyses avec des liens hypertextes
-    pfas_list = PFAS_map[PFAS_map["name"] == name]['substance'].unique()
+    pfas_list = PFAS_map[PFAS_map["name"] == name][['substance', 'value']]
+    pfas_list = pfas_list.groupby('substance')['value'].apply(list).to_dict()
     links = [f"<a href='/details/{urllib.parse.quote(name)}/{pfas}'>{pfas}</a>" for pfas in pfas_list]
     pfas_table_html = "<table border='1' style='margin-left: 20px;'><tr><th>Substance</th></tr>" + "".join(
         [f"<tr><td>{link}</td></tr>" for link in links]) + "</table>"
@@ -164,7 +273,7 @@ def show_details(name):
         </div>
         <h2 style="margin-top: 30px;">Données Utilisées</h2>
         <div style="float: left; width: 65%;">
-            {new_table_html}
+            {mean_table_html}
         </div>
         <div style="float: right; width: 30%;">
             <h3>Substances Testées</h3>
@@ -183,10 +292,10 @@ def show_substance_details(name, substance):
     filtered_data = PFAS_map[(PFAS_map["name"] == name) & (PFAS_map["substance"] == substance)]
 
     # Utiliser la fonction pour générer le graphique interactif
-    plot_html = generate_filtered_graph(filtered_data, f"{name} - {substance}")
+    plot_html, filtered_data = generate_filtered_graph(filtered_data, f"{name} - {substance}")
 
     # Créer un tableau des données utilisées
-    substance_table_html = filtered_data[['date', 'value', 'less_than', 'source_text', 'unit']].to_html(index=False, border=1)
+    substance_table_html = filtered_data.to_html(index=False, border=1)
 
     content = f"""
         <h1>Détails pour {substance} à {name}</h1>
